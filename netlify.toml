@@ -1,2 +1,2 @@
 [build]
-  command = "cd firebase/functions && yarn install && yarn build"
+  command = "cd firebase/functions && yarn install"
