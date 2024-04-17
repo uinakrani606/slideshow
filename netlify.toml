@@ -1,2 +1,6 @@
 [build]
   command = "cd firebase/functions && yarn install"
+  publish = ".next"
+
+[[plugins]]
+package = "@netlify/plugin-nextjs"
