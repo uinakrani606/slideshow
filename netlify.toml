@@ -1,2 +1,8 @@
 [build]
   command = "cd firebase/functions && yarn install && yarn build"
+  
+[[plugins]]
+  package = "netlify-plugin-node-helpers"
+
+  [plugins.inputs]
+    node_version = "16"
