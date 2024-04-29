@@ -8,12 +8,9 @@ const ImageAnnotator = (props) => {
   const state = useLocation();
   const initialState = state.state;
 
-  // @ts-ignore
-  const [metaData, setMetaData] = useState(initialState);
-  // @ts-ignore
-  const [slides, setSlides] = useState(JSON.parse(metaData.slides));
-  // @ts-ignore
-  const [slideFrames, setSlideFrames] = useState(JSON.parse(metaData.slide_frames));
+  const [metaData] = useState(initialState);
+  const [slides] = useState(JSON.parse(metaData.slides));
+  const [slideFrames] = useState(JSON.parse(metaData.slide_frames));
   
   function createCombinedArray(scenes, imageSizes, text) {
     // console.log(scenes, imageSizes, text);
