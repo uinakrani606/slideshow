@@ -80,7 +80,7 @@ const CanvasAnnotator = ({ scene , updateAnnotations , text}) => {
 
     setAnnotations((prevAnnotations) => [prevAnnotations, ...tempAnootations]);
     // console.log(annotations);
-  });
+  }, [scene.url, scene.images, scene.text, scene.name, canvasMeasures.width, canvasMeasures.height]);
   
   useEffect(() => {
     updateAnnotations(annotations)
