@@ -3,11 +3,10 @@ import Sidebar from "../../components/sidebar/Sidebar";
 import Navbar from "../../components/navbar/Navbar";
 import DriveFolderUploadOutlinedIcon from "@mui/icons-material/DriveFolderUploadOutlined";
 import { useEffect, useState } from "react";
-import { addDoc, collection, doc, serverTimestamp, setDoc } from "firebase/firestore";
+import { doc, serverTimestamp, setDoc } from "firebase/firestore";
 import { auth, db, storage } from "../../firebase";
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
-import { useNavigate } from "react-router-dom";
 
 const New = ({ inputs, title }) => {
   const [file, setFile] = useState("");
@@ -17,7 +16,6 @@ const New = ({ inputs, title }) => {
   const [data, setData] = useState({});
   const [per, setPerc] = useState(null);
   
-  const navigate = useNavigate();
 
   const handleFile1Change = (e) => {
     setFile1(e.target.files[0]);
@@ -34,7 +32,6 @@ const New = ({ inputs, title }) => {
 
   useEffect(() => {
     const handleUpload = async () => {  
-      const name = new Date().getTime() + file1.name;
       const storageRef = ref(storage, file1.name);
       const uploadTask = uploadBytesResumable(storageRef, file1);
       uploadTask.on(
@@ -55,7 +52,7 @@ const New = ({ inputs, title }) => {
               break;
           }
         },
-        (error) => {
+        () => {
           // console.log(error);
         },
         () => {
@@ -86,7 +83,6 @@ const New = ({ inputs, title }) => {
       }
     };
     const uploadFile = () => {
-      const name = new Date().getTime() + file.name;
       // console.log(name);
       const storageRef = ref(storage, file.name);
       const uploadTask = uploadBytesResumable(storageRef, file);
@@ -109,7 +105,7 @@ const New = ({ inputs, title }) => {
               break;
           }
         },
-        (error) => {
+        () => {
           // console.log(error);
         },
         () => {

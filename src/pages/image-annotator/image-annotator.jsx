@@ -6,11 +6,15 @@ import { useLocation } from "react-router-dom";
 
 const ImageAnnotator = (props) => {
   const state = useLocation();
-  // console.log("pefjhjg", state.state);
   const initialState = state.state;
+
+  // @ts-ignore
   const [metaData, setMetaData] = useState(initialState);
+  // @ts-ignore
   const [slides, setSlides] = useState(JSON.parse(metaData.slides));
+  // @ts-ignore
   const [slideFrames, setSlideFrames] = useState(JSON.parse(metaData.slide_frames));
+  
   function createCombinedArray(scenes, imageSizes, text) {
     // console.log(scenes, imageSizes, text);
     let combinedArray = [];
@@ -71,12 +75,9 @@ const ImageAnnotator = (props) => {
         image.height = modifiedHeight;
       });
     }
-    let updatedArrayJSON = JSON.stringify(newArray);
-    // console.log(updatedArrayJSON);
   }
 
   function updateAnnotations(updatedAnnotation) {
-    var matchingscene = {};
     var newsceneArray = newArray;
     var textAnnotation = [];
     var imageAnnotation = [];
