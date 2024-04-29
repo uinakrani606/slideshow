@@ -8,7 +8,7 @@ const CanvasAnnotator = ({ scene , updateAnnotations , text}) => {
   const [annotations, setAnnotations] = useState([]);
   const [newAnnotation, setNewAnnotation] = useState([]);
   const [selectedId, selectAnnotation] = useState(null);
-  const [containerId, setContainerId] = useState(
+  const [containerId] = useState(
     (Math.random() + 1).toString(36).substring(7)
   );
   const [canvasMeasures, setCanvasMeasures] = useState({
@@ -49,7 +49,7 @@ const CanvasAnnotator = ({ scene , updateAnnotations , text}) => {
         type: "image",
         length: scene.images.length,
       };
-      tempAnootations.push(newImageObject);
+      return tempAnootations.push(newImageObject);
     });
     scene.text.map((textItem, i) => {
       const layerPosX = textItem.x ? textItem.x : i * 10; // Example layer X position
@@ -75,9 +75,8 @@ const CanvasAnnotator = ({ scene , updateAnnotations , text}) => {
         text: scene.text.layer_name
       };
       // console.log("New text object x-coordinate:", newTextObject);
-      tempAnootations.push(newTextObject);
+      return tempAnootations.push(newTextObject);
     });
-    console.log("tempAnootations", tempAnootations)
 
     setAnnotations((prevAnnotations) => [prevAnnotations, ...tempAnootations]);
     // console.log(annotations);
