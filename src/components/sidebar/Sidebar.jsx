@@ -6,7 +6,12 @@ import { db } from "../../firebase";
 
 const Sidebar = () => {
   const [data, setData] = useState([]);
+  const [searchTerm, setSearchTerm] = useState("");
 
+  const handleSearchChange = (event) => {
+    setSearchTerm(event.target.value);
+  };
+  
   useEffect(() => {
       const unsub = onSnapshot(
       collection(db, "templates"),
@@ -41,18 +46,22 @@ const Sidebar = () => {
       </Link>
       
       <div className="search rounded-lg">
-        <input type="text" className="px-3 text-sm py-2" placeholder="Search Template" />
+        <input type="text" className="px-3 text-sm py-2" onChange={handleSearchChange} placeholder="Search Template" />
         </div>
         <div>          
-          <ul>                                          
+          <ul>                                      
             {data.map((item, index) => {
-              return (
-                <li key={index} className="template-item">
-                  <Link to={'/image-annotator/'+item.id} state={item} className="text-gray-800 p-2 bg-gray-100 rounded-lg text-semibold mb-3 text-base w-full hover:bg-gray-200 transition-all duration-200">
-                    {item.name}
-                  </Link>                                      
-                </li>
-              );
+              if (!searchTerm || item.name.toLowerCase().includes(searchTerm.toLowerCase())) {
+                return (
+                  <li key={index} className="template-item">
+                    <Link to={'/image-annotator/'+item.id} state={item} className="text-gray-800 p-2 bg-gray-100 rounded-lg text-semibold mb-3 text-base w-full hover:bg-gray-200 transition-all duration-200">
+                      {item.name}
+                    </Link>                                      
+                  </li>
+                );
+              } else{
+                return null;
+              }
             })}
         </ul>
         </div>
