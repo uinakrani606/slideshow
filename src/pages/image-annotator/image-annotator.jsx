@@ -121,7 +121,7 @@ const ImageAnnotator = () => {
 
   return (
     <div className="canvas-img">
-      {/* <button onClick={handleSaveButtonClick}>save</button> */}
+      <button className="hidden" onClick={handleSaveButtonClick}>save</button>
       {newArray.map((scene, index) => {
         return (
           <div key={index} id={scene.sceneIndex}>
