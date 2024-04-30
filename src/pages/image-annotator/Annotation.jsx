@@ -77,7 +77,6 @@ const Annotation = ({ shapeProps, isSelected, onSelect, onChange  , text}) => {
           });
         }}
       />
-      <Text text={text}/>
       {isSelected && (
         <Transformer
           enabledAnchors={enabledAnchors}

@@ -1,22 +1,20 @@
 import React, { useEffect, useState } from "react";
 import CanvasAnnotator from "./canvasAnnotator";
-import Image1 from "../../image/image-3.png";
 import { useLocation } from "react-router-dom";
-// import { Functions } from "@mui/icons-material";
 
-const ImageAnnotator = (props) => {
+const ImageAnnotator = () => {
   const state = useLocation();
   const initialState = state.state;
 
   const [metaData] = useState(initialState);
   const [slides] = useState(JSON.parse(metaData.slides));
   const [slideFrames] = useState(JSON.parse(metaData.slide_frames));
+  const [sceneSize, setSceneSize] = useState({height: 0, width: 0});
   
   function createCombinedArray(scenes, imageSizes, text) {
     // console.log(scenes, imageSizes, text);
     let combinedArray = [];
     scenes.forEach((scene) => {
-      console.log("metaData.slide_frames", slideFrames)
       let sceneImageData = slides.slide_uploads.find(
         (item) => {
           return item.scene_name === scene.name
@@ -49,7 +47,6 @@ const ImageAnnotator = (props) => {
         );
         combinedScene.text = matchingText;
       }
-      console.log("metaData.combinedScene", combinedScene)
       combinedArray.push(combinedScene);
     });
     return combinedArray;
@@ -113,8 +110,13 @@ const ImageAnnotator = (props) => {
     console.log(updatedArray)
     return updatedArray
   }
+
   useEffect(() => {
-   
+    const img = new Image();
+      img.src = newArray[0].url;
+      img.onload = () => {
+        setSceneSize({ width: img.width, height: img.height });
+      };
   });
 
   return (
@@ -124,8 +126,8 @@ const ImageAnnotator = (props) => {
         return (
           <div key={index} id={scene.sceneIndex}>
             <CanvasAnnotator
-              imageUrl={Image1}
               scene={scene}
+              sceneSize={sceneSize}
               updateAnnotations={updateAnnotations}
             />
           </div>

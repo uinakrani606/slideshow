@@ -4,26 +4,20 @@ import uuid from "uuid/v1";
 import ImageFromUrl from "./ImageFromUrl";
 import Annotation from "./Annotation";
 import "./Image-annotator.scss";
-const CanvasAnnotator = ({ scene , updateAnnotations , text}) => {
+const CanvasAnnotator = ({ scene , updateAnnotations , sceneSize}) => {
   const [annotations, setAnnotations] = useState([]);
   const [newAnnotation, setNewAnnotation] = useState([]);
   const [selectedId, selectAnnotation] = useState(null);
   const [containerId] = useState(
     (Math.random() + 1).toString(36).substring(7)
   );
-  const [canvasMeasures, setCanvasMeasures] = useState({
-    width: 600,
-    height: 337,
-    
-  });
+  useEffect(() => {
+    setCanvasMeasures(sceneSize);
+  }, [sceneSize, sceneSize.height, sceneSize.width])
+
+  const [canvasMeasures, setCanvasMeasures] = useState({height: 0, width: 0});
   useEffect(() => {
     // Get Image Size
-    const img = new Image();
-      img.src = scene.url;
-      img.onload = () => {
-        setCanvasMeasures({ width: img.width, height: img.height });
-      };
-
     let tempAnootations = [];
     scene.images.map((image, i) => {
       const layerPosX = image.x ? image.x : i * 10; // Example layer X position
@@ -48,6 +42,7 @@ const CanvasAnnotator = ({ scene , updateAnnotations , text}) => {
         id: uuid(),
         type: "image",
         length: scene.images.length,
+        text: image.name
       };
       return tempAnootations.push(newImageObject);
     });
@@ -72,20 +67,15 @@ const CanvasAnnotator = ({ scene , updateAnnotations , text}) => {
         id: uuid(),
         length: scene.text.length,
         type: "text",
-        text: scene.text.layer_name
+        text: textItem.name
       };
       // console.log("New text object x-coordinate:", newTextObject);
       return tempAnootations.push(newTextObject);
     });
-
     setAnnotations((prevAnnotations) => [prevAnnotations, ...tempAnootations]);
     // console.log(annotations);
   }, [scene.url, scene.images, scene.text, scene.name, canvasMeasures.width, canvasMeasures.height]);
   
-  useEffect(() => {
-    updateAnnotations(annotations)
-  }, [annotations, updateAnnotations]);
-
   const handleMouseMove = (event) => {
     if (selectedId === null && newAnnotation.length === 1) {
       const sx = newAnnotation[0].x;
@@ -157,7 +147,7 @@ const CanvasAnnotator = ({ scene , updateAnnotations , text}) => {
                 key={i}
                 shapeProps={annotation}
                 type={annotation.type}
-                text={annotation.name}
+                text={annotation.text}
                 isSelected={annotation.id === selectedId}
                 onSelect={() => {
                   selectAnnotation(annotation.id);

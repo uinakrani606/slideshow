@@ -3,10 +3,10 @@ import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { collection, onSnapshot  } from "firebase/firestore";
 import { db } from "../../firebase";
-import SearchOutlinedIcon from "@mui/icons-material/SearchOutlined";
+
 const Sidebar = () => {
   const [data, setData] = useState([]);
-  // console.log(data);
+
   useEffect(() => {
       const unsub = onSnapshot(
       collection(db, "templates"),
@@ -34,23 +34,27 @@ const Sidebar = () => {
         </Link>
       </div>
       <hr />
-      <div className="center">
-      <div className="search">
-          <input type="text" placeholder="Search..." />
-          <SearchOutlinedIcon />
+      <div className="center flex flex-col gap-3">
+      {/* New Template Button */}
+      <Link to={'/template/create'} className="rounded-lg bg-emerald-400 w-full block px-2 py-2 text-center text-gray-800 hover:bg-emerald-500 transition-all duration-20">
+        New Template
+      </Link>
+      
+      <div className="search rounded-lg">
+        <input type="text" className="px-3 text-sm py-2" placeholder="Search Template" />
         </div>
-        <div>
-          <p className="title">MAIN</p>
-          
-          {data.map((item, index) => {
-            return (
-              <ul key={index}>
-                <Link to={'/image-annotator/'+item.id} state={item}>
-                  <li key={index}>{item.name}</li>
-                </Link>
-              </ul>
-            );
-          })}
+        <div>          
+          <ul>                                          
+            {data.map((item, index) => {
+              return (
+                <li key={index} className="template-item">
+                  <Link to={'/image-annotator/'+item.id} state={item} className="text-gray-800 p-2 bg-gray-100 rounded-lg text-semibold mb-3 text-base w-full hover:bg-gray-200 transition-all duration-200">
+                    {item.name}
+                  </Link>                                      
+                </li>
+              );
+            })}
+        </ul>
         </div>
       </div>
     </div>

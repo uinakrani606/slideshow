@@ -1,28 +1,32 @@
 import Home from "./pages/home/Home";
+import Sidebar from "./components/sidebar/Sidebar";
+import Navbar from "./components/navbar/Navbar";
 import Login from "./pages/login/Login";
 import ImageGeneration from "./pages/imageGeneration";
-import List from "./pages/list/List";
-import Single from "./pages/single/Single";
-import New from "./pages/new/New";
+import "./App.scss"
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { productInputs, userInputs } from "./formSource";
-import "./style/dark.scss";
 import { useContext } from "react";
-import { DarkModeContext } from "./context/darkModeContext";
 import { AuthContext } from "./context/AuthContext";
 import ImageAnnotator from "./pages/image-annotator/image-annotator";
-import BlankPage from "./pages/blank-page/BlankPage";
 
 function App() {
-  const { darkMode } = useContext(DarkModeContext);
-
   const { currentUser } = useContext(AuthContext)
 
   const RequireAuth = ({ children }) => {
-    return currentUser ? children : <Navigate to="/login" />;
+    return currentUser ? (
+      <>
+      <div className="home">
+      <Sidebar />
+      <div className="homeContainer">
+        <Navbar />
+        {children}
+      </div>
+    </div>
+      </>
+    ) : <Navigate to="/login" />;
   };
   return (
-    <div className={darkMode ? "app dark" : "app"}>
+    <div className={"app"}>
       <BrowserRouter>
         <Routes>
           <Route path="/">
@@ -35,69 +39,9 @@ function App() {
                 </RequireAuth>
               }
             />
-            <Route path="users">
-              <Route
-                index
-                element={
-                  <RequireAuth>
-                    <List />
-                  </RequireAuth>
-                }
-              />
-              <Route
-                path=":userId"
-                element={
-                  <RequireAuth>
-                    <Single />
-                  </RequireAuth>
-                }
-              />
-              <Route
-                path="new"
-                element={
-                  <RequireAuth>
-                    <New inputs={userInputs} title="Add New User" />
-                  </RequireAuth>
-                }
-              />
-            </Route>
-            <Route path="products">
-              <Route
-                index
-                element={
-                  <RequireAuth>
-                    <List />
-                  </RequireAuth>
-                }
-              />
-              <Route
-                path=":productId"
-                element={
-                  <RequireAuth>
-                    <Single />
-                  </RequireAuth>
-                }
-              />
-              <Route
-                path="new"
-                element={
-                  <RequireAuth>
-                    <New inputs={productInputs} title="Add New Product" />
-                  </RequireAuth>
-                }
-              />
-            </Route>
             <Route path="image-generation" element={<ImageGeneration />} />
             <Route path="/image-annotator/:id">
-              <Route
-                index
-                element={
-                    <RequireAuth>
-                      <BlankPage />
-                    </RequireAuth>
-                }
-              />
-              <Route element={
+              <Route index element={
                   <RequireAuth>
                     <ImageAnnotator />
                   </RequireAuth>
