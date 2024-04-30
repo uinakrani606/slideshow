@@ -7,10 +7,16 @@ const Annotation = ({ shapeProps, isSelected, onSelect, onChange  , text}) => {
   useEffect(() => {
     if (isSelected) {
       // we need to attach transformer manually
+      transformRef.current.zIndex(10000);
       transformRef.current.setNode(shapeRef.current);
       transformRef.current.getLayer().batchDraw();
     }
   }, [isSelected]);
+
+  useEffect(() => {
+    console.log(shapeRef.current)
+      // shapeRef?.current?.appendChild('<span>'+text+'</span>');
+  }, [shapeRef])
 
   const enabledAnchors =
     shapeProps.type === "text"
@@ -83,7 +89,7 @@ const Annotation = ({ shapeProps, isSelected, onSelect, onChange  , text}) => {
           rotateEnabled={false}
           ref={transformRef}
         >
-      <Text text={text}/>
+      <Text fontSize={14} fill="#fff" text={text}/>
         </Transformer>
       )}
     </React.Fragment>

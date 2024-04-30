@@ -28,8 +28,8 @@ const CanvasAnnotator = ({ scene , updateAnnotations , sceneSize}) => {
       const layerCenterY = layerPosY * 0.5;
 
       // Calculate the position relative to the stage
-      const layerStagePosX = canvasMeasures.width * layerCenterX;
-      const layerStagePosY = canvasMeasures.height * layerCenterY;
+      const layerStagePosX = (image.x * canvasMeasures.width) - ((image.width) * canvasMeasures.width / 2);
+       const layerStagePosY = (image.y * canvasMeasures.height) - ((image.width / image.aspect_ratio) * canvasMeasures.height / 2);
 
       let newImageObject = {
         x: layerStagePosX,
@@ -55,15 +55,15 @@ const CanvasAnnotator = ({ scene , updateAnnotations , sceneSize}) => {
        const layerCenterY = layerPosY * 0.5;
  
        // Calculate the position relative to the stage
-       const layerStagePosX = canvasMeasures.width * layerCenterX;
-       const layerStagePosY = canvasMeasures.height * layerCenterY;
+       const layerStagePosX = (textItem.x * canvasMeasures.width) - ((textItem.width) * canvasMeasures.width / 2);
+       const layerStagePosY = (textItem.y * canvasMeasures.height) - ((textItem.height) * canvasMeasures.height / 2);
 
       let newTextObject = {
         x: layerStagePosX,
         y: layerStagePosY,
         name: scene.name,
-        width: 200,
-        height: 60,
+        width: textItem.width ? (textItem.width) * canvasMeasures.width : 200,
+        height: textItem.height ? (textItem.height) * canvasMeasures.height : 60,
         id: uuid(),
         length: scene.text.length,
         type: "text",
