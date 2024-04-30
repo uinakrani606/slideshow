@@ -20,13 +20,6 @@ const CanvasAnnotator = ({ scene , updateAnnotations , sceneSize}) => {
     // Get Image Size
     let tempAnootations = [];
     scene.images.map((image, i) => {
-      const layerPosX = image.x ? image.x : i * 10; // Example layer X position
-      const layerPosY = image.y ? image.y : i * 10 + 100; // Example layer Y position
-
-      // Calculate the center of the layer
-      const layerCenterX = layerPosX * 0.5;
-      const layerCenterY = layerPosY * 0.5;
-
       // Calculate the position relative to the stage
       const layerStagePosX = (image.x * canvasMeasures.width) - ((image.width) * canvasMeasures.width / 2);
        const layerStagePosY = (image.y * canvasMeasures.height) - ((image.width / image.aspect_ratio) * canvasMeasures.height / 2);
@@ -46,14 +39,7 @@ const CanvasAnnotator = ({ scene , updateAnnotations , sceneSize}) => {
       };
       return tempAnootations.push(newImageObject);
     });
-    scene.text.map((textItem, i) => {
-      const layerPosX = textItem.x ? textItem.x : i * 10; // Example layer X position
-      const layerPosY = textItem.y ? textItem.y : i * 10; // Example layer Y position
-
-       // Calculate the center of the layer
-       const layerCenterX = layerPosX * 0.5;
-       const layerCenterY = layerPosY * 0.5;
- 
+    scene.text.map((textItem, i) => { 
        // Calculate the position relative to the stage
        const layerStagePosX = (textItem.x * canvasMeasures.width) - ((textItem.width) * canvasMeasures.width / 2);
        const layerStagePosY = (textItem.y * canvasMeasures.height) - ((textItem.height) * canvasMeasures.height / 2);
