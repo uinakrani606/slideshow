@@ -22,7 +22,7 @@ const CanvasAnnotator = ({ scene , updateAnnotations , sceneSize}) => {
     scene.images.map((image, i) => {
       // Calculate the position relative to the stage
       const layerStagePosX = (image.x * canvasMeasures.width) - ((image.width) * canvasMeasures.width / 2);
-       const layerStagePosY = (image.y * canvasMeasures.height) - ((image.width / image.aspect_ratio) * canvasMeasures.height / 2);
+       const layerStagePosY = (image.y * canvasMeasures.height) - ((((image.width) * canvasMeasures.width) / image.aspect_ratio) / 2);
 
       let newImageObject = {
         x: layerStagePosX,
@@ -30,7 +30,7 @@ const CanvasAnnotator = ({ scene , updateAnnotations , sceneSize}) => {
         tempX: image.x,
         tempY: image.y,
         width: image.width ? (image.width) * canvasMeasures.width : 100,
-        height: image.aspect_ratio ? (image.width / image.aspect_ratio) * canvasMeasures.height : 100,  
+        height: image.aspect_ratio ? (((image.width) * canvasMeasures.width) / image.aspect_ratio) : 100,  
         name: scene.name,
         id: uuid(),
         type: "image",
