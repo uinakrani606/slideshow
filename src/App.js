@@ -16,45 +16,57 @@ function App() {
   const RequireAuth = ({ children }) => {
     return currentUser ? (
       <>
-      <div className="home">
-      <Sidebar />
-      <div className="homeContainer">
-        <Navbar />
-        {children}
-      </div>
-    </div>
+      {children}
       </>
     ) : <Navigate to="/login" />;
   };
   return (
     <div className={"app"}>
       <BrowserRouter>
-        <Routes>
-          <Route path="/">
-            <Route path="login" element={<Login />} />
-            <Route
-              index
-              element={
-                <RequireAuth>
-                  <Home />
-                </RequireAuth>
-              }
-            />
-            <Route path="image-generation" element={<ImageGeneration />} />
-            <Route path="/image-annotator/:id">
-              <Route index element={
+      {currentUser ? (
+        <>
+        <div className="home">
+        <Sidebar />
+        <div className="homeContainer">
+          <Navbar />
+          <Routes>
+            <Route path="/">
+              <Route path="login" element={<Login />} />
+              <Route
+                index
+                element={
                   <RequireAuth>
-                    <ImageAnnotator />
+                    <Home />
                   </RequireAuth>
-              } />
+                }
+              />
+              <Route path="image-generation" element={<ImageGeneration />} />
+              <Route path="/image-annotator/:id">
+                <Route index element={
+                    <RequireAuth>
+                      <ImageAnnotator />
+                    </RequireAuth>
+                } />
+              </Route>
+                <Route path="template/create" element={
+                  <RequireAuth>
+                    <NewTemplate />
+                  </RequireAuth>
+                } />
             </Route>
-              <Route path="template/create" element={
-                <RequireAuth>
-                  <NewTemplate />
-                </RequireAuth>
-              } />
-          </Route>
-        </Routes>
+          </Routes>
+        </div>
+      </div>
+        </>
+      ) : (
+<Routes>
+            <Route path="/">
+              <Route path="login" element={<Login />} />
+              
+            </Route>
+          </Routes>
+      )}
+        
       </BrowserRouter>
     </div>
   );
