@@ -21,7 +21,7 @@ const ImageFromUrl = ({
       // });
     });
 
-    return () => imageToLoad.removeEventListener("load");
+    return () => imageToLoad.removeEventListener("load", null);
   }, [imageUrl, setImage, setCanvasMeasures]);
 
   return (
