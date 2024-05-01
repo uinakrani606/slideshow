@@ -1,4 +1,5 @@
 import Home from "./pages/home/Home";
+import NewTemplate from "./pages/NewTemplate/NewTemplate";
 import Sidebar from "./components/sidebar/Sidebar";
 import Navbar from "./components/navbar/Navbar";
 import Login from "./pages/login/Login";
@@ -10,7 +11,7 @@ import { AuthContext } from "./context/AuthContext";
 import ImageAnnotator from "./pages/image-annotator/image-annotator";
 
 function App() {
-  const { currentUser } = useContext(AuthContext)
+  const { currentUser } = useContext(AuthContext);
 
   const RequireAuth = ({ children }) => {
     return currentUser ? (
@@ -47,6 +48,11 @@ function App() {
                   </RequireAuth>
               } />
             </Route>
+              <Route path="template/create" element={
+                <RequireAuth>
+                  <NewTemplate />
+                </RequireAuth>
+              } />
           </Route>
         </Routes>
       </BrowserRouter>
