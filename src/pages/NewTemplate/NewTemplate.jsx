@@ -1,7 +1,13 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { storage, db } from "../../firebase";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { collection, addDoc, setDoc, deleteDoc  } from "firebase/firestore";
+import { createFFmpeg } from "@ffmpeg/ffmpeg";
+
+const ffmpeg = createFFmpeg({
+  corePath: "https://unpkg.com/@ffmpeg/core@0.10.0/dist/ffmpeg-core.js",
+  log: true,
+});
 
 const NewTemplate = () => {
     const projectInput = useRef(null);
@@ -18,10 +24,99 @@ const NewTemplate = () => {
     const [thumbnailFileurl, setThumbnailFileUrl] = useState("");
     const [metadata, setMetadata] = useState("");
     const [loading, setLoading] = useState(false);
+    const [thumbnails, setThumbnails] = useState([]);
 
   const [name, setName] = useState("");
   const [category, setCategory] = useState("");
   const [description, setDescription] = useState("");
+
+  const [invalidMetaFile, setInvalidMetaFile] = useState(false);
+  const [disableUpload, setDisableUpload] = useState(false);
+  const [showRequiredError, setShowRequiredError] = useState(false);
+  const [uploadingFiles, setUploadingFiles] = useState(false);
+  const [uploadingData, setUploadingData] = useState(false);
+  const [generatingScenes, setGeneratingScenes] = useState(false);
+  const [sceneUrl, setSceneUrl] = useState('');
+  const [thumbFileData, setThumbFileData] = useState([]);
+  const [uploadingScenes, setUploadingScenes] = useState(false);
+
+  const loadFFmpeg = async () => {
+    await ffmpeg.load();
+  };
+
+  let tempThumbnailData = [];
+  const generateThumbnails = async () => {
+    setGeneratingScenes(true);
+    try {
+      // Load ffmpeg
+      if(!ffmpeg.isLoaded()) {
+        await loadFFmpeg();
+
+      }
+
+      // Read the uploaded video file
+      const videoData = new Uint8Array(await sampleVideoFile.arrayBuffer());
+
+      // Run ffmpeg command to generate thumbnails
+      await ffmpeg.FS("writeFile", "input.mp4", videoData);
+
+      function convertTimeFormat(time) {
+        // Split the time string into seconds and milliseconds
+        const [seconds, milliseconds] = time.toString().split(".");
+      
+        // Convert seconds to HH:MM:SS format
+        const hours = Math.floor(seconds / 3600);
+        const minutes = Math.floor((seconds % 3600) / 60);
+        const remainingSeconds = Math.floor(seconds % 60);
+      
+        // Format hours, minutes, and seconds with leading zeros if necessary
+        const formattedHours = hours.toString().padStart(2, "0");
+        const formattedMinutes = minutes.toString().padStart(2, "0");
+        const formattedSeconds = remainingSeconds.toString().padStart(2, "0");
+      
+        // Concatenate hours, minutes, seconds, and milliseconds
+        const formattedTime = `${formattedHours}:${formattedMinutes}:${formattedSeconds}.${milliseconds}`;
+      
+        return formattedTime;
+      }
+
+      const scenesTemp = JSON.parse(metadata);
+      
+      for (let index = 0; index < scenesTemp.scenes.length; index++) {
+        const scene = scenesTemp.scenes[index];
+        try {
+          await ffmpeg.run(
+            "-i",
+            "input.mp4",
+            "-ss",
+            convertTimeFormat(scene.start_time),
+            "-frames:v",
+            "1",
+            `thumbnail${index}.jpg`
+          );
+      
+          const thumbnailData = await ffmpeg.FS("readFile", `thumbnail${index}.jpg`);
+
+          setThumbFileData((prevState) => [...prevState, thumbFileData]);
+          console.log("thumb file data",thumbFileData)
+
+           const thumbUrl = URL.createObjectURL(
+            new Blob([thumbnailData.buffer], { type: "image/jpeg" })
+          )
+          tempThumbnailData.push(thumbUrl)
+          setThumbnails((prevState) => [...prevState, thumbUrl])
+          setGeneratingScenes(false);
+        } catch (error) {
+          setGeneratingScenes(false);
+          console.error(`Error processing thumbnail ${index}:`, error);
+        }
+      }
+
+    } catch (error) {
+      setGeneratingScenes(false);
+      console.error("Error generating thumbnails:", error);
+    }
+  };
 
    const uploadFile = async (storageRef, file, setFileUrl) => {
     try {
@@ -32,6 +127,7 @@ const NewTemplate = () => {
       console.log(url)
       setFileUrl(url);
     } catch (error) {
+      setUploadingFiles(false);
       console.error("Error uploading file: ", error);
     }
   };
@@ -52,11 +148,63 @@ const NewTemplate = () => {
     metadataInput.current.value = "";
     videoInput.current.value = "";
     thumbnailInput.current.value = "";
+    setInvalidMetaFile(false);
+    setDisableUpload(false);
+    setUploadingData(false);
+    setUploadingData(false);
+    setGeneratingScenes(false);
   };
 
-  const uploadTemplate = async () => {
+  useEffect(() => {
+console.log(sceneUrl)
+  }, [sceneUrl])
+
+  // useEffect(() => {
+  
+  //   generateThumbnails()
+  // }, [sampleVideoFile])
+
+  useEffect(() => {
+    if (!projectFile || !sampleVideoFile || !name || !thumbnailFile || invalidMetaFile) {
+      setDisableUpload(true);
+    } else {
+      setDisableUpload(false);
+    }
+  }, [projectFile, sampleVideoFile, name, thumbnailFile, invalidMetaFile])
+
+  useEffect(() => {    
+        if (metaDataFile) {
+          const reader = new FileReader();
+        reader.onload = (event) => {
+        try {
+            const data = event.target.result;
+            let metaTemp = JSON.parse(data);
+            if (!metaTemp.scenes || !metaTemp.image_sizes || !metaTemp.text) {
+              setInvalidMetaFile(true);
+            } else {
+              setInvalidMetaFile(false);
+            }
+            setName(metaTemp.name ? metaTemp.name : '');
+            setCategory(metaTemp.category ? metaTemp.category : '');
+            setDescription(metaTemp.description ? metaTemp.description : '');
+            setMetadata(data);
+        } catch (error) {
+            console.error("Error parsing JSON file: ", error);
+        }
+        };
+          reader.readAsText(metaDataFile);
+        }
+  }, [metaDataFile])
+
+  const uploadTemplate = async () => {    
+    if (disableUpload) {
+      setShowRequiredError(true);
+      return
+    }      
+
     setLoading(true);
     let newDocRef;
+    setUploadingData(true);
     try {
       const templatesRef = collection(db, "templates");
       let myDocumentData = {
@@ -68,6 +216,7 @@ const NewTemplate = () => {
       newDocRef = await addDoc(templatesRef, myDocumentData);
 
       const storageRef = ref(storage, newDocRef.id);
+      setUploadingFiles(true);
        // Upload project file
        if (projectFile) {
         await uploadFile(storageRef, projectFile, setProjectFileUrl);
@@ -78,21 +227,34 @@ const NewTemplate = () => {
       if (thumbnailFile) {
         await uploadFile(storageRef, thumbnailFile, setThumbnailFileUrl);
       }
+      setUploadingFiles(false);
       // Upload metadata file
     //   if (metaDataFile) {
     //     await uploadFile(metaDataFile, setMetaDataFileUrl);
     //   }
 
-      const reader = new FileReader();
-        reader.onload = (event) => {
+      await generateThumbnails();
+
+      setUploadingScenes(true);
+      for (let index = 0; index < tempThumbnailData.length; index++) {
+        const imageBlob = await fetch(tempThumbnailData[index]).then(response => response.blob());
+
         try {
-            const data = event.target.result;
-            setMetadata(data);
-        } catch (error) {
-            console.error("Error parsing JSON file: ", error);
-        }
-        };
-        reader.readAsText(metaDataFile);
+          const fileRef = ref(storageRef, 'scenes/thumbfnail'+index + ".jpg");
+  
+        await uploadBytes(fileRef, imageBlob);
+        const url = await getDownloadURL(fileRef);
+        console.log(url)
+        setSceneUrl(url);
+      } catch (error) {
+        setUploadingScenes(false);
+        setUploadingFiles(false);
+        console.error("Error uploading file: ", error);
+      }
+      }
+      setThumbnails([])
+      tempThumbnailData = [];
+      setUploadingScenes(false);
 
       myDocumentData = {
         ...myDocumentData,
@@ -108,6 +270,9 @@ const NewTemplate = () => {
     } catch (error) {
         await deleteDoc(newDocRef);
         setLoading(false);
+        setUploadingData(false);
+        setGeneratingScenes(false);
+        setUploadingFiles(false);
         console.error("Error uploading files and saving data: ", error);
     }
   };
@@ -115,11 +280,42 @@ const NewTemplate = () => {
   return (
     <div className="p-8">
       <h1 className="text-black text-2xl mb-10 font-semibold">Upload New Template</h1>
-      <div className="px-5 max-w-[450px] w-full mb-7 relative">
+      {thumbnails.length > 0 && (
+        <div className="flex gap-2 items-center">
+          {thumbnails.map((thumbnail, index) => (
+            <img className="w-24" key={index} src={thumbnail} alt={`Thumbnail ${index + 1}`} />
+          ))}
+        </div>
+      )}
+      <div className="px-5 w-full mb-7 relative grid grid-cols-2 gap-4">
+        {
+          showRequiredError ? (
+            <span className="text-red-500 col-span-2">Please fill the required fields.</span>
+          ) : ''
+        }
+        {
+          invalidMetaFile ? (
+            <span className="text-red-500 col-span-2">Metadata file is invalid. Please select valid metadata file.</span>
+          ) : ''
+        }
         {
             loading ? (
-                <div className="loading-overlay bg-white/50 left-0 top-0 absolute h-full w-full z-10 flex items-center justify-center">
+                <div className="loading-overlay bg-white/80 left-0 top-0 absolute h-full w-full z-10 flex items-center justify-center flex-col">
                     <img src={'/images/loading.svg'} alt="Loading" className="h-20" />
+                    {
+                    uploadingFiles ? 
+                    <span className="text-gray-800">Uploading Files...</span>
+                  : ''}
+                  {
+                    uploadingData ? 
+                    <span className="text-gray-800">Saving Data...</span>
+                    : ''
+                  }
+                  {
+                    generatingScenes ? 
+                    <span className="text-gray-800">Generating scenes...</span>
+                    : ''
+                  }
                 </div>
             ) : ""
         }
@@ -133,14 +329,14 @@ const NewTemplate = () => {
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="Enter Project Name"
-            className="w-full border border-solid border-[#e3e3e3] bg-[#f9f9f9] p-3 rounded-lg text-base text-[#858585] outline-none"
+            className="w-full border border-solid border-[#e3e3e3] bg-[#f9f9f9] p-3 rounded-lg text-base  outline-none"
           />
         </div>
         <div className="pb-5">
           <label htmlFor="project-categrory" className="w-full pb-1.5 block text-base text-[#8e8e8e]">
             Project Categrory
           </label>
-          <select value={category} onChange={(e) => setCategory(e.target.value)} className="w-full border border-solid  border-[#e3e3e3] bg-[#f9f9f9] p-3 rounded-lg text-base text-[#858585] outline-none appearance-none bg-no-repeat bg-[right_1rem_top_50%]">
+          <select value={category} onChange={(e) => setCategory(e.target.value)} className="w-full border border-solid  border-[#e3e3e3] bg-[#f9f9f9] p-3 rounded-lg text-base  outline-none appearance-none bg-no-repeat bg-[right_1rem_top_50%]">
             <option value="categrory">Choose categrory </option>
             <option value="categrory1">categrory 1</option>
             <option value="categrory2">categrory 2</option>
@@ -151,7 +347,7 @@ const NewTemplate = () => {
           <label htmlFor="project-file" className="w-full pb-1.5 block text-base text-[#8e8e8e]">
             Project file
           </label>
-          <div className="w-full border border-solid  border-[#e3e3e3] bg-[#f9f9f9] rounded-lg text-base text-[#858585] outline-none flex items-center relative">
+          <div className="w-full border border-solid  border-[#e3e3e3] bg-[#f9f9f9] rounded-lg text-base  outline-none flex items-center relative">
             <div className="rounded-l-lg bg-[#bfbfbf] inline-block py-2 px-3 text-black">Choose File</div>
             <div className="py-2 px-3">
             {
@@ -173,7 +369,7 @@ const NewTemplate = () => {
           <label htmlFor="metadata-file" className="w-full pb-1.5 block text-base text-[#8e8e8e]">
             Metadata File
           </label>
-          <div className="w-full border border-solid  border-[#e3e3e3] bg-[#f9f9f9] rounded-lg text-base text-[#858585] outline-none flex items-center relative">
+          <div className="w-full border border-solid  border-[#e3e3e3] bg-[#f9f9f9] rounded-lg text-base  outline-none flex items-center relative">
             <div className="rounded-l-lg bg-[#bfbfbf] inline-block py-2 px-3 text-black">Choose File</div>
             <div className="py-2 px-3">
                 {
@@ -195,7 +391,7 @@ const NewTemplate = () => {
           <label htmlFor="sample-video" className="w-full pb-1.5 block text-base text-[#8e8e8e]">
             Sample Video
           </label>
-          <div className="w-full border border-solid  border-[#e3e3e3] bg-[#f9f9f9] rounded-lg text-base text-[#858585] outline-none flex items-center relative">
+          <div className="w-full border border-solid  border-[#e3e3e3] bg-[#f9f9f9] rounded-lg text-base  outline-none flex items-center relative">
             <div className="rounded-l-lg bg-[#bfbfbf] inline-block py-2 px-3 text-black">Choose File</div>
             <div className="py-2 px-3">
             {
@@ -217,7 +413,7 @@ const NewTemplate = () => {
           <label htmlFor="Thumbnail" className="w-full pb-1.5 block text-base text-[#8e8e8e]">
             Thumbnail
           </label>
-          <div className="w-full border border-solid  border-[#e3e3e3] bg-[#f9f9f9] rounded-lg text-base text-[#858585] outline-none flex items-center relative">
+          <div className="w-full border border-solid  border-[#e3e3e3] bg-[#f9f9f9] rounded-lg text-base  outline-none flex items-center relative">
             <div className="rounded-l-lg bg-[#bfbfbf] inline-block py-2 px-3 text-black">Choose File</div>
             <div className="py-2 px-3">
             {
@@ -235,7 +431,7 @@ const NewTemplate = () => {
             />
           </div>
         </div>
-        <div className="pb-5">
+        <div className="pb-5 col-span-2">
           <label htmlFor="Description" className="w-full pb-1.5 block text-base text-[#8e8e8e]">
             Description
           </label>
@@ -243,14 +439,15 @@ const NewTemplate = () => {
           value={description}
           onChange={e => setDescription(e.target.value)}
             placeholder="Write Description Here..."
-            className="w-full border border-solid  border-[#e3e3e3] bg-[#f9f9f9] rounded-lg text-base text-[#858585] resize-none outline-none flex items-center relative p-3"
+            className="w-full border border-solid  border-[#e3e3e3] bg-[#f9f9f9] rounded-lg text-base  resize-none outline-none flex items-center relative p-3"
             rows={4}
           ></textarea>
         </div>
-        <div className="text-end">
+        <div className="text-end col-span-2">
           <button
+            disabled={disableUpload}
             onClick={uploadTemplate}
-            className="p-2 px-3 bg-[#e3f7fc] rounded-lg text-semibold text-[#227285] text-center text-sm font-semibold"
+            className={`p-2 px-3 bg-emerald-400 rounded-lg text-semibold text-gray-800 text-center text-sm ${disableUpload ? 'opacity-50' : ''}`}
           >
             Upload
           </button>

@@ -59,10 +59,17 @@ function App() {
       </div>
         </>
       ) : (
-<Routes>
+        <Routes>
             <Route path="/">
-              <Route path="login" element={<Login />} />
-              
+              <Route
+                  index
+                  element={
+                    <RequireAuth>
+                      <Home />
+                    </RequireAuth>
+                  }
+                />
+              <Route path="/login" element={<Login />} />
             </Route>
           </Routes>
       )}
