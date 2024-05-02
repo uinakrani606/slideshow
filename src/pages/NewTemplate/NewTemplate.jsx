@@ -316,6 +316,11 @@ console.log(sceneUrl)
                     <span className="text-gray-800">Generating scenes...</span>
                     : ''
                   }
+                  {
+                    uploadingScenes ? 
+                    <span className="text-gray-800">Uploading scenes...</span>
+                    : ''
+                  }
                 </div>
             ) : ""
         }
