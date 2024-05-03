@@ -1,8 +1,9 @@
 import "./sidebar.scss";
 import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { collection, onSnapshot  } from "firebase/firestore";
-import { db } from "../../firebase";
+import { collection, onSnapshot, deleteDoc, doc } from "firebase/firestore";
+import { ref, deleteObject, listAll  } from "firebase/storage";
+import { storage, db } from "../../firebase";
 
 const Sidebar = () => {
   const [data, setData] = useState([]);
@@ -11,6 +12,27 @@ const Sidebar = () => {
   const handleSearchChange = (event) => {
     setSearchTerm(event.target.value);
   };
+
+  const deleteTemplate = async (template) => {
+    const docRef = doc(db, "templates", template.id);
+
+deleteDoc(docRef)
+.then(() => {
+    console.log("Entire Document has been deleted successfully.")
+})
+.catch(error => {
+    console.log(error);
+})
+    const storageRef = ref(storage, template.id);
+     // Now we get the references of these files
+     listAll(storageRef).then(function (result) {
+      result.items.forEach(function (file) {
+         file.delete();
+      });
+  }).catch(function (error) {
+      // Handle any errors
+  });
+  }
   
   useEffect(() => {
       const unsub = onSnapshot(
@@ -65,7 +87,7 @@ const Sidebar = () => {
                     <path d="M3 22H21" stroke="currentColor" stroke-width="1.5" stroke-miterlimit="10" strokeLinecap="round" strokeLinejoin="round"/>
                     </svg>
                     </span>
-                    <span className="hover:bg-gray-300 p-1.5 rounded-lg transition-all duration-300">
+                    <span onClick={() => {deleteTemplate(item)}} className="hover:bg-gray-300 p-1.5 rounded-lg transition-all duration-300">
                       <svg width="22" height="22" className="text-red-500" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                       <path d="M21 5.98047C17.67 5.65047 14.32 5.48047 10.98 5.48047C9 5.48047 7.02 5.58047 5.04 5.78047L3 5.98047" stroke="currentColor" stroke-width="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                       <path d="M8.5 4.97L8.72 3.66C8.88 2.71 9 2 10.69 2H13.31C15 2 15.13 2.75 15.28 3.67L15.5 4.97" stroke="currentColor" stroke-width="1.5" strokeLinecap="round" strokeLinejoin="round"/>

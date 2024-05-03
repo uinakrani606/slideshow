@@ -19,14 +19,15 @@ const CanvasAnnotator = ({ scene , updateAnnotations , sceneSize}) => {
   useEffect(() => {
     // Get Image Size
     let tempAnootations = [];
+    console.log(scene)
     scene.images.map((image, i) => {
       // Calculate the position relative to the stage
       const layerStagePosX = (image.x * canvasMeasures.width) - ((image.width) * canvasMeasures.width / 2);
        const layerStagePosY = (image.y * canvasMeasures.height) - ((((image.width) * canvasMeasures.width) / image.aspect_ratio) / 2);
 
       let newImageObject = {
-        x: layerStagePosX,
-        y: layerStagePosY,
+        x: image.x ? layerStagePosX : 10 * i,
+        y: image.y ? layerStagePosY : (10 * i) + 100,
         tempX: image.x,
         tempY: image.y,
         width: image.width ? (image.width) * canvasMeasures.width : 100,
@@ -45,8 +46,8 @@ const CanvasAnnotator = ({ scene , updateAnnotations , sceneSize}) => {
        const layerStagePosY = (textItem.y * canvasMeasures.height) - ((textItem.height) * canvasMeasures.height / 2);
 
       let newTextObject = {
-        x: layerStagePosX,
-        y: layerStagePosY,
+        x: textItem.x ? layerStagePosX : 10 * i,
+        y: textItem.y ? layerStagePosY : 10 * i,
         name: scene.name,
         width: textItem.width ? (textItem.width) * canvasMeasures.width : 200,
         height: textItem.height ? (textItem.height) * canvasMeasures.height : 60,
@@ -62,6 +63,10 @@ const CanvasAnnotator = ({ scene , updateAnnotations , sceneSize}) => {
     // console.log(annotations);
   }, [scene.url, scene.images, scene.text, scene.name, canvasMeasures.width, canvasMeasures.height]);
   
+  useEffect(() => {
+    updateAnnotations(annotations)
+  }, [annotations, updateAnnotations]);
+
   const handleMouseMove = (event) => {
     if (selectedId === null && newAnnotation.length === 1) {
       const sx = newAnnotation[0].x;

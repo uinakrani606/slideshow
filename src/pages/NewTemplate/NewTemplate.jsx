@@ -39,12 +39,19 @@ const NewTemplate = () => {
   const [sceneUrl, setSceneUrl] = useState('');
   const [thumbFileData, setThumbFileData] = useState([]);
   const [uploadingScenes, setUploadingScenes] = useState(false);
+  const [slideFrames, setSlideFrames] = useState([]);
 
   const loadFFmpeg = async () => {
     await ffmpeg.load();
   };
 
   let tempThumbnailData = [];
+  let fileUrls = {
+    projectFileUrl: "",
+    videoFileUrl: "",
+    thumbnailFileUrl: ""
+  }
+
   const generateThumbnails = async () => {
     setGeneratingScenes(true);
     try {
@@ -83,6 +90,7 @@ const NewTemplate = () => {
       const scenesTemp = JSON.parse(metadata);
       
       for (let index = 0; index < scenesTemp.scenes.length; index++) {
+        console.log('loading scenes',  scenesTemp.scenes[index])
         const scene = scenesTemp.scenes[index];
         try {
           await ffmpeg.run(
@@ -92,10 +100,12 @@ const NewTemplate = () => {
             convertTimeFormat(scene.start_time),
             "-frames:v",
             "1",
-            `thumbnail${index}.jpg`
+            "-vf",
+            "scale=600:-1",
+            `${scene.name}.jpg`
           );
       
-          const thumbnailData = await ffmpeg.FS("readFile", `thumbnail${index}.jpg`);
+          const thumbnailData = await ffmpeg.FS("readFile", `${scene.name}.jpg`);
 
           setThumbFileData((prevState) => [...prevState, thumbFileData]);
           console.log("thumb file data",thumbFileData)
@@ -103,7 +113,10 @@ const NewTemplate = () => {
            const thumbUrl = URL.createObjectURL(
             new Blob([thumbnailData.buffer], { type: "image/jpeg" })
           )
-          tempThumbnailData.push(thumbUrl)
+          tempThumbnailData.push({
+            scene_name: scene.name,
+            slide: scene.name + '.jpg',
+            url: thumbUrl})
           setThumbnails((prevState) => [...prevState, thumbUrl])
           setGeneratingScenes(false);
         } catch (error) {
@@ -118,13 +131,16 @@ const NewTemplate = () => {
     }
   };
 
-   const uploadFile = async (storageRef, file, setFileUrl) => {
+   const uploadFile = async (storageRef, file, setFileUrl, fileUrl) => {
     try {
         const fileRef = ref(storageRef, file.name);
 
       await uploadBytes(fileRef, file.name);
       const url = await getDownloadURL(fileRef);
-      console.log(url)
+      console.log(setFileUrl, url)
+      if (fileUrl) {
+        fileUrls[fileUrl] = url
+      }
       setFileUrl(url);
     } catch (error) {
       setUploadingFiles(false);
@@ -143,6 +159,7 @@ const NewTemplate = () => {
     setSampleVideoFileUrl("");
     setThumbnailFileUrl("");
     setMetadata("");
+    setDescription("");
     setLoading(false);
     projectInput.current.value = "";
     metadataInput.current.value = "";
@@ -156,13 +173,8 @@ const NewTemplate = () => {
   };
 
   useEffect(() => {
-console.log(sceneUrl)
+    console.log(sceneUrl)
   }, [sceneUrl])
-
-  // useEffect(() => {
-  
-  //   generateThumbnails()
-  // }, [sampleVideoFile])
 
   useEffect(() => {
     if (!projectFile || !sampleVideoFile || !name || !thumbnailFile || invalidMetaFile) {
@@ -187,6 +199,27 @@ console.log(sceneUrl)
             setName(metaTemp.name ? metaTemp.name : '');
             setCategory(metaTemp.category ? metaTemp.category : '');
             setDescription(metaTemp.description ? metaTemp.description : '');
+            metaTemp.scenes.map((scene) => {
+              console.log('mappedScene', scene)
+              let matchingImages = metaTemp.image_sizes.filter((image) =>
+                {
+                  image.aspect_ratio = image.width/image.height;
+                  image.width = 0.3;
+                  image.height = 0;
+                  return image.name.includes(`photo-${scene.sceneIndex}`)
+                }
+              );
+              let matchingText = metaTemp.text.filter((t) =>
+                t.layer_name.includes(`text-${scene.sceneIndex}`)
+              );
+              console.log('mappedSceneIMages', matchingImages, matchingText)
+
+              setSlideFrames((prevState) => [...prevState, {
+                name: scene.name,
+                photo_frames: matchingImages,
+                text_frames: matchingText
+              }])
+            })
             setMetadata(data);
         } catch (error) {
             console.error("Error parsing JSON file: ", error);
@@ -219,13 +252,13 @@ console.log(sceneUrl)
       setUploadingFiles(true);
        // Upload project file
        if (projectFile) {
-        await uploadFile(storageRef, projectFile, setProjectFileUrl);
+        await uploadFile(storageRef, projectFile, setProjectFileUrl, "projectFileUrl");
       }
       if (sampleVideoFile) {
-        await uploadFile(storageRef, sampleVideoFile, setSampleVideoFileUrl);
+        await uploadFile(storageRef, sampleVideoFile, setSampleVideoFileUrl, "videoFileUrl");
       }
       if (thumbnailFile) {
-        await uploadFile(storageRef, thumbnailFile, setThumbnailFileUrl);
+        await uploadFile(storageRef, thumbnailFile, setThumbnailFileUrl, "thumbnailFileUrl");
       }
       setUploadingFiles(false);
       // Upload metadata file
@@ -237,14 +270,15 @@ console.log(sceneUrl)
 
       setUploadingScenes(true);
       for (let index = 0; index < tempThumbnailData.length; index++) {
-        const imageBlob = await fetch(tempThumbnailData[index]).then(response => response.blob());
+        console.log('thumbdataarray', tempThumbnailData)
+        const imageBlob = await fetch(tempThumbnailData[index].url).then(response => response.blob());
 
         try {
-          const fileRef = ref(storageRef, 'scenes/thumbfnail'+index + ".jpg");
+          const fileRef = ref(storageRef, 'scenes/'+ tempThumbnailData[index].scene_name + ".jpg");
   
         await uploadBytes(fileRef, imageBlob);
         const url = await getDownloadURL(fileRef);
-        console.log(url)
+        tempThumbnailData[index].url = url;
         setSceneUrl(url);
       } catch (error) {
         setUploadingScenes(false);
@@ -253,20 +287,28 @@ console.log(sceneUrl)
       }
       }
       setThumbnails([])
-      tempThumbnailData = [];
+      
       setUploadingScenes(false);
 
       myDocumentData = {
         ...myDocumentData,
+        description: description,
         metadata: metadata,
-        project_file: projectFileUrl,
-        sample_video_url: sampleVideoFileUrl,
-        thumbnail_url: thumbnailFileurl,
+        slide_frames: JSON.stringify(slideFrames),
+        slides: JSON.stringify({
+          slide_uploads: tempThumbnailData
+        }),
+        project_file: fileUrls.projectFileUrl,
+        sample_video_url: fileUrls.videoFileUrl,
+        thumbnail_url: fileUrls.thumbnailFileUrl,
       };
-      await setDoc(newDocRef, myDocumentData);
-      setLoading(false);
-
-      resetForm();
+      await setDoc(newDocRef, myDocumentData).then(() => {
+        setLoading(false);
+        resetForm();
+        tempThumbnailData = [];
+      }).catch((error) => {
+        console.log("Error setting the doc" + error)
+      });
     } catch (error) {
         await deleteDoc(newDocRef);
         setLoading(false);
