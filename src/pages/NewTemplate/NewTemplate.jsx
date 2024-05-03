@@ -170,6 +170,11 @@ const NewTemplate = () => {
     setUploadingData(false);
     setUploadingData(false);
     setGeneratingScenes(false);
+    fileUrls = {
+      projectFileUrl: "",
+      videoFileUrl: "",
+      thumbnailFileUrl: ""
+    }
   };
 
   useEffect(() => {
@@ -218,7 +223,8 @@ const NewTemplate = () => {
                 name: scene.name,
                 photo_frames: matchingImages,
                 text_frames: matchingText
-              }])
+              }]);
+              return true;
             })
             setMetadata(data);
         } catch (error) {
@@ -289,6 +295,7 @@ const NewTemplate = () => {
       setThumbnails([])
       
       setUploadingScenes(false);
+      console.log(projectFileUrl, sampleVideoFileUrl, thumbnailFileurl);
 
       myDocumentData = {
         ...myDocumentData,
