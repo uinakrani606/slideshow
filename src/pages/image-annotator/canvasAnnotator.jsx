@@ -61,6 +61,8 @@ const CanvasAnnotator = ({ scene , updateAnnotations , sceneSize}) => {
     });
     setAnnotations((prevAnnotations) => [prevAnnotations, ...tempAnootations]);
     // console.log(annotations);
+
+    // eslint-disable-next-line
   }, [scene.url, scene.images, scene.text, scene.name, canvasMeasures.width, canvasMeasures.height]);
   
   useEffect(() => {

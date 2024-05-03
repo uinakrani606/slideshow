@@ -2,7 +2,7 @@ import "./sidebar.scss";
 import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { collection, onSnapshot, deleteDoc, doc } from "firebase/firestore";
-import { ref, deleteObject, listAll  } from "firebase/storage";
+import { ref, listAll  } from "firebase/storage";
 import { storage, db } from "../../firebase";
 
 const Sidebar = () => {
