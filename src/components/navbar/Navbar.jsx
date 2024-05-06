@@ -17,6 +17,7 @@ const Navbar = () => {
 
     }).catch((error) => {
       setError(true);
+      console.log(error)
     });
   };
   return (

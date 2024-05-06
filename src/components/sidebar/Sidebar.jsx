@@ -93,6 +93,7 @@ const Sidebar = () => {
                           {item.name}
                         </Link>
                         <div className="action-bar flex items-center">
+                          <Link to={item.id+'/edit'}>
                           <span className="hover:bg-gray-300 p-1.5 rounded-lg transition-all duration-300">
                             <svg width="24" height="24" className="text-gray-600" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                               <path d="M13.2603 3.60022L5.05034 12.2902C4.74034 12.6202 4.44034 13.2702 4.38034 13.7202L4.01034 16.9602C3.88034 18.1302 4.72034 18.9302 5.88034 18.7302L9.10034 18.1802C9.55034 18.1002 10.1803 17.7702 10.4903 17.4302L18.7003 8.74022C20.1203 7.24022 20.7603 5.53022 18.5503 3.44022C16.3503 1.37022 14.6803 2.10022 13.2603 3.60022Z" stroke="currentColor" stroke-width="1.5" strokeMiterlimit="10" strokeLinecap="round" strokeLinejoin="round" />
@@ -100,6 +101,7 @@ const Sidebar = () => {
                               <path d="M3 22H21" stroke="currentColor" strokeWidth="1.5" strokeMiterlimit="10" strokeLinecap="round" strokeLinejoin="round" />
                             </svg>
                           </span>
+                          </Link>
                           <span onClick={() => handleDeleteClick(item)} className="hover:bg-gray-300 p-1.5 rounded-lg transition-all duration-300">
                             <svg width="22" height="22" className="text-red-500" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                               <path d="M21 5.98047C17.67 5.65047 14.32 5.48047 10.98 5.48047C9 5.48047 7.02 5.58047 5.04 5.78047L3 5.98047" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />

@@ -1,7 +1,9 @@
 import React, { useState, useRef, useEffect } from "react";
 import { storage, db } from "../../firebase";
+// import { useParams } from "react-router-dom";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { collection, addDoc, setDoc, deleteDoc } from "firebase/firestore";
+// import { useLocation } from "react-router-dom";
 import { createFFmpeg } from "@ffmpeg/ffmpeg";
 
 const ffmpeg = createFFmpeg({
@@ -10,6 +12,8 @@ const ffmpeg = createFFmpeg({
 });
 
 const NewTemplate = () => {
+  // const state = useLocation();
+  // const { id } = useParams();
   const projectInput = useRef(null);
   const metadataInput = useRef(null);
   const videoInput = useRef(null);

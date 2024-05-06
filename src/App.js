@@ -14,7 +14,6 @@ function App() {
   const { currentUser } = useContext(AuthContext);
 
   const RequireAuth = ({ children }) => {
-    console.log(currentUser)
     return currentUser ? (
       <>
       {children}
@@ -50,6 +49,11 @@ function App() {
                 } />
               </Route>
                 <Route path="template/create" element={
+                  <RequireAuth>
+                    <NewTemplate />
+                  </RequireAuth>
+                } />
+                <Route path="/:id/edit" element={
                   <RequireAuth>
                     <NewTemplate />
                   </RequireAuth>
