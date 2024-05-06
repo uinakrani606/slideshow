@@ -7,4 +7,4 @@ status = 200
 for = "/*"
   [headers.values]
     Cross-Origin-Opener-Policy = "same-origin"
-    Cross-Origin-Embedder-Policy = "same-origin"
+    Cross-Origin-Embedder-Policy = "require-corp"
