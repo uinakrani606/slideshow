@@ -17,11 +17,15 @@ const Navbar = () => {
 
     }).catch((error) => {
       setError(true);
-      console.log(error)
     });
   };
   return (
     <div className="navbar">
+      {
+        error ? (
+          <span>{error}</span>
+        ) : ''
+      }
       <div className="wrapper">
         <div className="items">
           <div className="item">
