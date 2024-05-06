@@ -14,6 +14,7 @@ function App() {
   const { currentUser } = useContext(AuthContext);
 
   const RequireAuth = ({ children }) => {
+    console.log(currentUser)
     return currentUser ? (
       <>
       {children}
@@ -59,6 +60,8 @@ function App() {
       </div>
         </>
       ) : (
+        <>
+        <Navigate to="/login" />
         <Routes>
             <Route path="/">
               <Route
@@ -72,6 +75,7 @@ function App() {
               <Route path="/login" element={<Login />} />
             </Route>
           </Routes>
+          </>
       )}
         
       </BrowserRouter>

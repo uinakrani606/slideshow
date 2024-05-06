@@ -4,7 +4,7 @@ import uuid from "uuid/v1";
 import ImageFromUrl from "./ImageFromUrl";
 import Annotation from "./Annotation";
 import "./Image-annotator.scss";
-const CanvasAnnotator = ({ scene , updateAnnotations , sceneSize}) => {
+const CanvasAnnotator = ({ scene , updateAnnotations , sceneSize, newsceneArray}) => {
   const [annotations, setAnnotations] = useState([]);
   const [newAnnotation, setNewAnnotation] = useState([]);
   const [selectedId, selectAnnotation] = useState(null);
@@ -59,16 +59,12 @@ const CanvasAnnotator = ({ scene , updateAnnotations , sceneSize}) => {
       // console.log("New text object x-coordinate:", newTextObject);
       return tempAnootations.push(newTextObject);
     });
-    setAnnotations((prevAnnotations) => [prevAnnotations, ...tempAnootations]);
+    setAnnotations(tempAnootations);
     // console.log(annotations);
 
     // eslint-disable-next-line
   }, [scene.url, scene.images, scene.text, scene.name, canvasMeasures.width, canvasMeasures.height]);
   
-  useEffect(() => {
-    updateAnnotations(annotations)
-  }, [annotations, updateAnnotations]);
-
   const handleMouseMove = (event) => {
     if (selectedId === null && newAnnotation.length === 1) {
       const sx = newAnnotation[0].x;
@@ -146,10 +142,11 @@ const CanvasAnnotator = ({ scene , updateAnnotations , sceneSize}) => {
                   selectAnnotation(annotation.id);
                 }}
                 onChange={(newAttrs) => {
-                  const updatedAnnotations = annotations.map((ann) =>
+                  const updatedAnnotationsData = annotations.map((ann) => 
                     ann.id === annotation.id ? newAttrs : ann
                   );
-                  setAnnotations(updatedAnnotations);
+                  updateAnnotations(updatedAnnotationsData, newsceneArray)
+                  setAnnotations(updatedAnnotationsData);
                 }}
               />
             );

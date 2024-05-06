@@ -69,6 +69,7 @@ const Annotation = ({ shapeProps, isSelected, onSelect, onChange  , text}) => {
           const layer = shapeRef.current;
           const scaleX = layer.scaleX();
           const scaleY = layer.scaleY();
+          console.log( Math.max(5, layer.width() * scaleX))
 
           // we will reset it back
           layer.scaleX(1);
