@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { Rect, Transformer  , Text} from "react-konva";
+import { Rect, Transformer, Text} from "react-konva";
 
 const Annotation = ({ shapeProps, isSelected, onSelect, onChange  , text}) => {
   const shapeRef = React.useRef();
@@ -90,7 +90,7 @@ const Annotation = ({ shapeProps, isSelected, onSelect, onChange  , text}) => {
           rotateEnabled={false}
           ref={transformRef}
         >
-      <Text fontSize={14} fill="#fff" text={text}/>
+      <Text fontSize={14} fill="#ccc" text={text}/>
         </Transformer>
       )}
     </React.Fragment>

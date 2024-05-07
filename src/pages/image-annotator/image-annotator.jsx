@@ -19,6 +19,7 @@ const ImageAnnotator = () => {
   const [metadataObj, setMetadataObj] = useState([]);
   const [updatedSlideFrames, setUpdatedSlideFrames] = useState([]);
   const [combinedArrayTemp, setCombinedArrayTemp] = useState(newArray);
+  const [loading, setLoading] = useState(false);
   
   const fetchTemplate = useCallback( async() => {
     const docRef = doc(db, "templates", id);
@@ -49,12 +50,16 @@ const ImageAnnotator = () => {
   }, [metaData]);
 
   const updateTemplate = async () => {
+    setLoading(true);
     const templateRef = doc(db, "templates", initialState.id);
 
     await updateDoc(templateRef, {
       slide_frames: JSON.stringify(updatedSlideFrames)
     }).then(() => {
+      setLoading(false);
       setSlideFrames(updatedSlideFrames);
+    }).catch(() => {
+      setLoading(false);
     });
   }
 
@@ -63,7 +68,6 @@ const ImageAnnotator = () => {
     var imageAnnotation = [];
     var sceneName = "";
     let newsceneArray = combinedArrayTemp;
-    console.log('newsceneArraynewsceneArraynewsceneArraynewsceneArray', combinedArrayTemp)
 
     updatedAnnotation.forEach((item) => {
       sceneName = item.name;
@@ -71,7 +75,6 @@ const ImageAnnotator = () => {
       {
         ...item
       };
-      console.log('updatedAnnotationupdatedAnnotationupdatedAnnotation',sceneSize.height, tempItem, updatedAnnotation)
       if (item.type === "image") {
         tempItem.x = (item.x + (item.width/2))/sceneSize.width;
         tempItem.y = (item.y + (item.height/2))/sceneSize.height;
@@ -114,7 +117,6 @@ const ImageAnnotator = () => {
       tempSlideFrames.push(slideFrameItem);
     });
 
-    console.log("tempSlideFramestempSlideFramestempSlideFrames", tempSlideFrames)
     setUpdatedSlideFrames(tempSlideFrames);
     setCombinedArrayTemp(newsceneArray);
 
@@ -187,7 +189,6 @@ const ImageAnnotator = () => {
       combinedArray.push(combinedScene);
     });
     setCombinedArrayTemp(combinedArray);
-    console.log("createCombinedArraycreateCombinedArray", combinedArray)
 
     setNewArray(combinedArray);
     return combinedArray;
@@ -195,6 +196,15 @@ const ImageAnnotator = () => {
   
   return (
     <div className="canvas-img inline-block">
+      {loading ? (
+          <div className="loading-overlay bg-white/80 left-0 top-0 absolute h-full w-full z-10 flex items-center justify-center flex-col">
+            <img src={"/images/loading.svg"} alt="Loading" className="h-20" />
+            <span className="text-gray-800">Saving Annotations...</span>
+
+          </div>
+        ) : (
+          ""
+        )}
       <div className="mx-3">
         <button className="bg-emerald-400 py-1 px-3 rounded-md" onClick={updateTemplate}>save</button>
       </div>

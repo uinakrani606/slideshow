@@ -1,19 +1,18 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import { storage, db } from "../../firebase";
-// import { useParams } from "react-router-dom";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import { collection, addDoc, setDoc, deleteDoc } from "firebase/firestore";
-// import { useLocation } from "react-router-dom";
+import { deleteDoc, getDoc, doc, updateDoc } from "firebase/firestore";
+import { useParams } from "react-router-dom";
 import { FFmpeg  } from "@ffmpeg/ffmpeg";
 import { toBlobURL } from '@ffmpeg/util';
 
-const NewTemplate = () => {
-  // const state = useLocation();
-  // const { id } = useParams();
+const EditTemplate = () => {
+  const { id } = useParams();
   const projectInput = useRef(null);
   const metadataInput = useRef(null);
   const videoInput = useRef(null);
   const thumbnailInput = useRef(null);
+  
     // eslint-disable-next-line
   const messageRef = useRef(null);
 
@@ -45,11 +44,47 @@ const NewTemplate = () => {
   const [radioButton, setRadioButton] = useState('landscape');
     // eslint-disable-next-line
   const [loaded, setLoaded] = useState(false);
+  // eslint-disable-next-line
+  const [metadataObj, setMetadataObj] = useState([]);
+  // eslint-disable-next-line
+  const [slides, setSlides] = useState();
+  const [docRef, setDocRef] = useState(null);
+
+
   const ffmpegRef = useRef(new FFmpeg());
 
   const handleOptionClick = (value) => {
     setRadioButton(value);
   };
+ 
+  const isFile = (value) => {
+    return value instanceof File;
+  };
+
+  const fetchTemplate = useCallback( async() => {
+    const docRef = doc(db, "templates", id);
+    setDocRef(docRef);
+    const docSnap = await getDoc(docRef);
+
+    if (docSnap.exists()) {
+      let fetchedMetadata = docSnap.data();
+      setMetadata(fetchedMetadata);
+      setName(fetchedMetadata.name);
+      setCategory(fetchedMetadata.category);
+      setRadioButton(fetchedMetadata.orientation);
+      setSlideFrames(fetchedMetadata.slide_frames ? JSON.parse(fetchedMetadata.slide_frames) : {});
+      setMetadataObj(JSON.parse(fetchedMetadata.metadata));
+      setSlides(JSON.parse(fetchedMetadata.slides));
+
+    } else {
+      // docSnap.data() will be undefined in this case
+      console.log("No such document!");
+    }
+  }, [id])
+  
+  useEffect(() => {
+    fetchTemplate();
+  }, [fetchTemplate, id])
 
   const load = async () => {
     const baseURL = 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd'
@@ -169,6 +204,7 @@ const NewTemplate = () => {
     }
   };
 
+  // eslint-disable-next-line
   const resetForm = () => {
     setName("");
     setCategory("");
@@ -205,17 +241,14 @@ const NewTemplate = () => {
 
   useEffect(() => {
     if (
-      !projectFile ||
-      !sampleVideoFile ||
       !name ||
-      !thumbnailFile ||
       invalidMetaFile
     ) {
       setDisableUpload(true);
     } else {
       setDisableUpload(false);
     }
-  }, [projectFile, sampleVideoFile, name, thumbnailFile, invalidMetaFile]);
+  }, [name, invalidMetaFile]);
 
   useEffect(() => {
     if (metaDataFile) {
@@ -269,23 +302,14 @@ const NewTemplate = () => {
     }
 
     setLoading(true);
-    let newDocRef;
+    let newDocRef = docRef;
     setUploadingData(true);
     try {
-      const templatesRef = collection(db, "templates");
-      let myDocumentData = {
-        name: name,
-        category: category,
-        orientation:radioButton
-      };
-
-      // Add the document to the collection
-      newDocRef = await addDoc(templatesRef, myDocumentData);
-
       const storageRef = ref(storage, newDocRef.id);
       setUploadingFiles(true);
       // Upload project file
-      if (projectFile) {
+      console.log("projectFileprojectFileprojectFile",projectFile)
+      if (projectFile && isFile(projectFile)) {
         await uploadFile(
           storageRef,
           projectFile,
@@ -293,7 +317,7 @@ const NewTemplate = () => {
           "projectFileUrl"
         );
       }
-      if (sampleVideoFile) {
+      if (sampleVideoFile && isFile(sampleVideoFile)) {
         await uploadFile(
           storageRef,
           sampleVideoFile,
@@ -301,7 +325,7 @@ const NewTemplate = () => {
           "videoFileUrl"
         );
       }
-      if (thumbnailFile) {
+      if (thumbnailFile && isFile(thumbnailFile)) {
         console.log("thumbnailFilethumbnailFilethumbnailFile",thumbnailFile)
         await uploadFile(
           storageRef,
@@ -316,55 +340,70 @@ const NewTemplate = () => {
       //     await uploadFile(metaDataFile, setMetaDataFileUrl);
       //   }
 
-      await generateThumbnails();
+      if (isFile(thumbnailFile) || isFile(sampleVideoFile)) {
+        await generateThumbnails();
 
-      setUploadingScenes(true);
-      for (let index = 0; index < tempThumbnailData.length; index++) {
-        const imageBlob = await fetch(tempThumbnailData[index].url).then(
-          (response) => response.blob()
-        );
-
-        try {
-          const fileRef = ref(
-            storageRef,
-            "scenes/" + tempThumbnailData[index].scene_name + ".jpg"
+        setUploadingScenes(true);
+        for (let index = 0; index < tempThumbnailData.length; index++) {
+          const imageBlob = await fetch(tempThumbnailData[index].url).then(
+            (response) => response.blob()
           );
 
-          await uploadBytes(fileRef, imageBlob);
-          const url = await getDownloadURL(fileRef);
-          tempThumbnailData[index].url = url;
-          setSceneUrl(url);
-        } catch (error) {
-          setUploadingScenes(false);
-          setUploadingFiles(false);
-          console.error("Error uploading file: ", error);
-        }
-      }
-      setThumbnails([]);
+          try {
+            const fileRef = ref(
+              storageRef,
+              "scenes/" + tempThumbnailData[index].scene_name + ".jpg"
+            );
 
-      setUploadingScenes(false);
+            await uploadBytes(fileRef, imageBlob);
+            const url = await getDownloadURL(fileRef);
+            tempThumbnailData[index].url = url;
+            setSceneUrl(url);
+          } catch (error) {
+            setUploadingScenes(false);
+            setUploadingFiles(false);
+            console.error("Error uploading file: ", error);
+          }
+        }
+        setThumbnails([]);
+
+        setUploadingScenes(false);
+      }
       console.log(projectFileUrl, sampleVideoFileUrl, thumbnailFileurl);
 
-      myDocumentData = {
-        ...myDocumentData,
+      console.log('metadatametadatametadata', metadata)
+      let metadataClone = JSON.parse(metadata.metadata);
+      metadataClone.name = name;
+      metadataClone.description = description;
+      metadataClone.category = category;
+
+      let myDocumentData = {
         description: description,
-        metadata: metadata,
+        metadata: JSON.stringify(metadataClone),
+        name: name,
+        category: category,
+        orientation:radioButton,
         slide_frames: JSON.stringify(slideFrames),
         slides: JSON.stringify({
           slide_uploads: tempThumbnailData,
         }),
-        project_file_name: projectFile.name,
-        sample_video_name: sampleVideoFile.name,
-        thumbnail_name: thumbnailFile.name,
-        metadata_name: metaDataFile.name,
-        project_file: fileUrls.projectFileUrl,
-        sample_video_url: fileUrls.videoFileUrl,
-        thumbnail_url: fileUrls.thumbnailFileUrl,
       };
-      await setDoc(newDocRef, myDocumentData)
+
+      if (fileUrls.projectFileUrl) {
+        myDocumentData.project_file = fileUrls.projectFileUrl
+      }
+      
+      if (fileUrls.videoFileUrl) {
+        myDocumentData.sample_video_url = fileUrls.videoFileUrl
+      }
+      
+      if (fileUrls.thumbnailFileUrl) {
+        myDocumentData.thumbnail_url = fileUrls.thumbnailFileUrl
+      }
+
+      await updateDoc(newDocRef, myDocumentData)
         .then(() => {
           setLoading(false);
-          resetForm();
           tempThumbnailData = [];
         })
         .catch((error) => {
@@ -383,7 +422,7 @@ const NewTemplate = () => {
   return (
     <div className="p-8">
       <h1 className="text-black text-2xl mb-10 font-semibold">
-        Upload New Template
+        Edit Template
       </h1>
       {thumbnails.length > 0 && (
         <div className="flex gap-2 items-center">
@@ -484,7 +523,13 @@ const NewTemplate = () => {
               Choose File
             </div>
             <div className="py-2 px-3">
-              {projectFile ? projectFile.name : "No file selected"}
+            {
+                projectFile ? projectFile.name : (
+                  <>
+                    {metadata.project_file_name ? metadata.project_file_name : "No file selected"}
+                  </>
+                )
+              }
             </div>
             <input
               required
@@ -509,7 +554,13 @@ const NewTemplate = () => {
               Choose File
             </div>
             <div className="py-2 px-3">
-              {metaDataFile ? metaDataFile.name : "No file selected"}
+            {
+                metaDataFile ? metaDataFile.name : (
+                  <>
+                    {metadata.metadata_name ? metadata.metadata_name : "No file selected"}
+                  </>
+                )
+              }
             </div>
             <input
               required
@@ -534,7 +585,14 @@ const NewTemplate = () => {
               Choose File
             </div>
             <div className="py-2 px-3">
-              {sampleVideoFile ? sampleVideoFile.name : "No file selected"}
+              {
+                sampleVideoFile ? sampleVideoFile.name : (
+                  <>
+                    {metadata.sample_video_name ? metadata.sample_video_name : "No file selected"}
+                  </>
+                )
+              }
+              
             </div>
             <input
               required
@@ -559,7 +617,13 @@ const NewTemplate = () => {
               Choose File
             </div>
             <div className="py-2 px-3">
-              {thumbnailFile ? thumbnailFile.name : "No file selected"}
+            {
+                thumbnailFile ? thumbnailFile.name : (
+                  <>
+                    {metadata.thumbnail_name ? metadata.thumbnail_name : "No file selected"}
+                  </>
+                )
+              }
             </div>
             <input
               required
@@ -596,7 +660,7 @@ const NewTemplate = () => {
             </div>
           </div>
         </div>
-        <div className="pb-5 col-span-2 hidden">
+        <div className="pb-5 col-span-2">
           <label
             htmlFor="Description"
             className="w-full pb-1.5 block text-base text-[#8e8e8e]"
@@ -626,4 +690,4 @@ const NewTemplate = () => {
   );
 };
 
-export default NewTemplate;
+export default EditTemplate;

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Stage, Layer } from "react-konva";
+import { Stage, Layer, Text } from "react-konva";
 import uuid from "uuid/v1";
 import ImageFromUrl from "./ImageFromUrl";
 import Annotation from "./Annotation";
@@ -151,6 +151,7 @@ const CanvasAnnotator = ({ scene , updateAnnotations , sceneSize, newsceneArray}
               />
             );
           })}
+          <Text fontSize={14} fill="#000" text={scene.name}/>
         </Layer>
       </Stage>
     </div>

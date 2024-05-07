@@ -9,6 +9,8 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useContext } from "react";
 import { AuthContext } from "./context/AuthContext";
 import ImageAnnotator from "./pages/image-annotator/image-annotator";
+import EditTemplate from "./pages/EditTemplate/EditTemplate";
+import ViewTemplate from "./pages/ViewTemplate/ViewTemplate";
 
 function App() {
   const { currentUser } = useContext(AuthContext);
@@ -55,7 +57,12 @@ function App() {
                 } />
                 <Route path="/:id/edit" element={
                   <RequireAuth>
-                    <NewTemplate />
+                    <EditTemplate />
+                  </RequireAuth>
+                } />
+                <Route path="/:id/view" element={
+                  <RequireAuth>
+                    <ViewTemplate />
                   </RequireAuth>
                 } />
             </Route>
