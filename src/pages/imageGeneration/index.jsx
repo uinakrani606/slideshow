@@ -1,7 +1,9 @@
 import React, { useState } from "react";
 
 const ImageGeneration = () => {
+  // eslint-disable-next-line  
   const [videoFile, setVideoFile] = useState(null);
+  // eslint-disable-next-line
   const [thumbnails, setThumbnails] = useState([]);
 
   const handleFileChange = (e) => {
